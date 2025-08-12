@@ -3,8 +3,11 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const morgan = require('morgan');
+const path = require('path');
 const logger = require('./utils/logger');
 const errorHandler = require('./middlewares/errorMiddleware');
+const setupSwaggerDocs = require('./swagger/index');
+
 
 // Import Routes
 const authRoutes = require('./routes/authRoutes');
@@ -14,12 +17,12 @@ const addressRoutes = require('./routes/addressRoutes');
 const pincodeZoneRoutes = require('./routes/pincodeZoneRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const deliveryRoutes = require('./routes/deliveryRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
-
 
 // (Add other routes like productRoutes, orderRoutes, etc.)
 
@@ -28,8 +31,16 @@ const { createSuperAdmin } = require('./scripts/createSuperAdmin');
 
 const app = express();
 
+// Swagger Documentation
+setupSwaggerDocs(app);
+
 // Middleware
-app.use(cors());
+// CORS setup for frontend connection
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:3000', // React dev URL
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(morgan('dev'));
 
@@ -41,12 +52,23 @@ app.use('/api/addresses', addressRoutes);
 app.use('/api/zones', pincodeZoneRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/payments', paymentRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/deliveries', deliveryRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
+
+// ===== Serve Frontend in Production =====
+if (process.env.NODE_ENV === 'production') {
+  const frontendPath = path.join(__dirname, '..', 'frontend', 'build');
+  app.use(express.static(frontendPath));
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(frontendPath, 'index.html'));
+  });
+}
 
 // Error middleware
 app.use(errorHandler);

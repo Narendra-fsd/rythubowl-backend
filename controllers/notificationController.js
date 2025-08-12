@@ -1,14 +1,24 @@
 const Notification = require('../models/notificationModel');
 
-// Create Notification (Admin/SuperAdmin only)
+// Create Notification (supports single or multiple users)
 exports.createNotification = async (req, res) => {
   try {
-    const { user, title, message, type } = req.body;
+    let { user, title, message, type } = req.body;
 
-    const notification = new Notification({ user, title, message, type });
-    await notification.save();
+    if (!user || !title || !message) {
+      return res.status(400).json({ message: 'User, title, and message are required' });
+    }
 
-    res.status(201).json({ message: 'Notification created', notification });
+    // Support single user ID or array
+    const users = Array.isArray(user) ? user : [user];
+    const notifications = users.map(uid => ({ user: uid, title, message, type }));
+
+    const created = await Notification.insertMany(notifications);
+
+    res.status(201).json({
+      message: `${created.length} notification(s) created`,
+      notifications: created
+    });
   } catch (err) {
     res.status(500).json({ message: 'Failed to create notification', error: err.message });
   }
@@ -18,7 +28,8 @@ exports.createNotification = async (req, res) => {
 exports.getAllNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find()
-      .populate('user', 'name email');
+      .populate('user', 'name email')
+      .sort({ createdAt: -1 });
 
     res.json(notifications);
   } catch (err) {
@@ -26,7 +37,7 @@ exports.getAllNotifications = async (req, res) => {
   }
 };
 
-// Get user-specific notifications
+// Get logged-in user notifications
 exports.getUserNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({ user: req.user._id })
@@ -42,13 +53,17 @@ exports.getUserNotifications = async (req, res) => {
 exports.markAsRead = async (req, res) => {
   try {
     const notification = await Notification.findById(req.params.id);
-    if (!notification) return res.status(404).json({ message: 'Notification not found' });
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
 
+    // Only allow if it's their notification or they're a SuperAdmin
     if (req.user.role !== 'SuperAdmin' && notification.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
     notification.isRead = true;
+    notification.readAt = new Date();
     await notification.save();
 
     res.json({ message: 'Notification marked as read', notification });
@@ -61,7 +76,9 @@ exports.markAsRead = async (req, res) => {
 exports.deleteNotification = async (req, res) => {
   try {
     const deleted = await Notification.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: 'Notification not found' });
+    if (!deleted) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
 
     res.json({ message: 'Notification deleted successfully' });
   } catch (err) {

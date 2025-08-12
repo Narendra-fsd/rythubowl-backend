@@ -1,6 +1,8 @@
 const Order = require('../models/orderModel');
 const { assignDeliveryAgent } = require('../services/deliveryTrackingService');
 const { createNotification } = require('../services/notificationService');
+const { calculateAnalytics } = require('../services/analyticsService');
+const Analytics = require('../models/analyticsModel');
 
 // Create new order and assign delivery
 exports.createOrder = async (req, res) => {
@@ -25,6 +27,14 @@ exports.createOrder = async (req, res) => {
       `Your order #${order._id} has been placed successfully.`,
       'Order'
     );
+
+    // 🔹 Update analytics after order creation
+    try {
+      const analyticsData = await calculateAnalytics();
+      await Analytics.create(analyticsData);
+    } catch (analyticsErr) {
+      console.error("Analytics update failed after order creation:", analyticsErr.message);
+    }
 
     res.status(201).json(order);
   } catch (err) {
@@ -93,6 +103,14 @@ exports.updateOrderStatus = async (req, res) => {
       );
     }
 
+    // 🔹 Update analytics after order update
+    try {
+      const analyticsData = await calculateAnalytics();
+      await Analytics.create(analyticsData);
+    } catch (analyticsErr) {
+      console.error("Analytics update failed after order update:", analyticsErr.message);
+    }
+
     res.json({ message: 'Order updated', order });
   } catch (err) {
     res.status(500).json({ message: 'Failed to update order', error: err.message });
@@ -112,6 +130,14 @@ exports.deleteOrder = async (req, res) => {
       `Your order #${deleted._id} has been cancelled by the admin.`,
       'Order'
     );
+
+    // 🔹 Update analytics after order deletion
+    try {
+      const analyticsData = await calculateAnalytics();
+      await Analytics.create(analyticsData);
+    } catch (analyticsErr) {
+      console.error("Analytics update failed after order deletion:", analyticsErr.message);
+    }
 
     res.json({ message: 'Order deleted successfully' });
   } catch (err) {

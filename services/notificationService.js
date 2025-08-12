@@ -9,16 +9,15 @@ const Notification = require('../models/notificationModel');
  */
 const createNotification = async (userId, title, message, type = 'System') => {
   try {
-    const notification = new Notification({
+    const notification = await Notification.create({
       user: userId,
       title,
       message,
       type
     });
-    await notification.save();
     return notification;
   } catch (err) {
-    console.error('Failed to create notification:', err.message);
+    console.error(`[NotificationService] Failed to create notification for user ${userId}: ${err.message}`);
     throw new Error('Notification creation failed');
   }
 };
@@ -29,14 +28,15 @@ const createNotification = async (userId, title, message, type = 'System') => {
  */
 const markAsRead = async (notificationId) => {
   try {
-    const notification = await Notification.findById(notificationId);
+    const notification = await Notification.findByIdAndUpdate(
+      notificationId,
+      { isRead: true },
+      { new: true }
+    );
     if (!notification) throw new Error('Notification not found');
-
-    notification.isRead = true;
-    await notification.save();
     return notification;
   } catch (err) {
-    console.error('Failed to mark notification as read:', err.message);
+    console.error(`[NotificationService] Failed to mark as read (${notificationId}): ${err.message}`);
     throw new Error('Mark as read failed');
   }
 };
@@ -44,12 +44,21 @@ const markAsRead = async (notificationId) => {
 /**
  * Get notifications for a specific user
  * @param {ObjectId} userId
+ * @param {Boolean} populateUser - Whether to populate user details
  */
-const getUserNotifications = async (userId) => {
+const getUserNotifications = async (userId, populateUser = false) => {
   try {
-    return await Notification.find({ user: userId }).sort({ createdAt: -1 });
+    let query = Notification.find({ user: userId })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    if (populateUser) {
+      query = query.populate('user', 'name email');
+    }
+
+    return await query;
   } catch (err) {
-    console.error('Failed to fetch notifications:', err.message);
+    console.error(`[NotificationService] Failed to fetch notifications for user ${userId}: ${err.message}`);
     throw new Error('Fetching notifications failed');
   }
 };

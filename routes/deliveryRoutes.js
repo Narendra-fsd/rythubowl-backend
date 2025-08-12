@@ -10,7 +10,7 @@ router.post('/', authMiddleware, rbacMiddleware('SuperAdmin'), deliveryControlle
 
 router.get('/', rbacMiddleware('SuperAdmin'), deliveryController.getAllDeliveries);
 router.get('/:id', rbacMiddleware('SuperAdmin', 'DeliveryAgent'), deliveryController.getDeliveryById);
-router.put('/:id', rbacMiddleware('SuperAdmin', 'DeliveryAgent'), deliveryController.updateDelivery);
+router.put('/:id', rbacMiddleware('SuperAdmin', 'DeliveryAgent'), deliveryController.updateDeliveryStatus);
 router.delete('/:id', rbacMiddleware('SuperAdmin'), deliveryController.deleteDelivery);
 
 module.exports = router;

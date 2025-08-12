@@ -23,6 +23,12 @@ const notificationSchema = new mongoose.Schema({
   isRead: {
     type: Boolean,
     default: false,
+  },
+  readAt: {
+    type: Date,
+  },
+  expiresAt: {
+    type: Date, // Optional auto-delete after some time
   }
 }, { timestamps: true });
 

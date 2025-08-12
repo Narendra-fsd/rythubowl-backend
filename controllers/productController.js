@@ -5,6 +5,15 @@ exports.createProduct = async (req, res) => {
   try {
     const product = new Product(req.body);
     await product.save();
+
+    // 🔹 Update analytics after product creation
+    try {
+      const analyticsData = await calculateAnalytics();
+      await Analytics.create(analyticsData);
+    } catch (analyticsErr) {
+      console.error("Analytics update failed after product creation:", analyticsErr.message);
+    }
+
     res.status(201).json({
       message: "Product created successfully",
       product,
@@ -56,6 +65,14 @@ exports.updateProduct = async (req, res) => {
 
     if (!updated) return res.status(404).json({ message: "Product not found" });
 
+    // 🔹 Update analytics after product update
+    try {
+      const analyticsData = await calculateAnalytics();
+      await Analytics.create(analyticsData);
+    } catch (analyticsErr) {
+      console.error("Analytics update failed after product update:", analyticsErr.message);
+    }
+
     res.status(200).json({
       message: "Product updated successfully",
       product: updated,
@@ -73,6 +90,14 @@ exports.deleteProduct = async (req, res) => {
   try {
     const deleted = await Product.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ message: "Product not found" });
+
+    // 🔹 Update analytics after product deletion
+    try {
+      const analyticsData = await calculateAnalytics();
+      await Analytics.create(analyticsData);
+    } catch (analyticsErr) {
+      console.error("Analytics update failed after product deletion:", analyticsErr.message);
+    }
 
     res.status(200).json({
       message: "Product deleted successfully",

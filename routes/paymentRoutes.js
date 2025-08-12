@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middlewares/authMiddleware');
-const controller = require('../controllers/paymentController');
+const paymentController = require('../controllers/paymentController');
+const { rbacMiddleware } = require('../middlewares/rbacMiddleware');
 const { createRazorpayOrder, verifyRazorpaySignature } = require('../services/paymentService');
 
 

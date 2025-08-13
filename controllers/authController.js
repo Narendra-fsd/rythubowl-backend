@@ -8,103 +8,142 @@ const Analytics = require("../models/analyticsModel");
 
 // @desc    Register a new user
 const register = async (req, res) => {
-  const { name, email, phone, password } = req.body;
+  try {
+    const { name, email, phone, password } = req.body;
 
-  const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
-  if (existingUser) {
-    return res
-      .status(400)
-      .json({ message: "User already exists with email or phone" });
-  }
-
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
-
-  // Generate OTP for email verification
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
-
-  const newUser = await User.create({
-    name,
-    email,
-    phone,
-    passwordHash: hashedPassword,
-    role: "User", // default role
-    isEmailVerified: false,
-    emailOTP: otpHash,
-    emailOTPExpiry: Date.now() + 10 * 60 * 1000 // 10 minutes
-  });
-
-  // Send OTP to user's email
-  await sendEmail(email, "Email Verification OTP", `Your OTP is: ${otp}`);
-
-  // const token = generateToken({ userId: newUser._id, role: newUser.role });
-
-  // 🔹 Auto-update analytics after new user registration
-    try {
-      const newData = await calculateAnalytics();
-      await Analytics.create(newData);
-    } catch (analyticsErr) {
-      console.error("Analytics update failed after user registration:", analyticsErr.message);
+    // Check existing user
+    const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "User already exists with email or phone"
+      });
     }
 
-  res.status(201).json({
-    message: "User registered successfully",
-  });
+    // Create user
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
+
+    const newUser = await User.create({
+      name,
+      email,
+      phone,
+      passwordHash: hashedPassword,
+      role: "User",
+      isEmailVerified: false,
+      emailOTP: otpHash,
+      emailOTPExpiry: Date.now() + 10 * 60 * 1000
+    });
+
+    // Send OTP (fire and forget)
+    sendEmail(email, "Email Verification OTP", `Your OTP is: ${otp}`)
+      .catch(err => console.error("Email send error:", err));
+
+    // Return success response
+    return res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      data: {
+        email: newUser.email
+      }
+    });
+
+  } catch (error) {
+    console.error("Registration error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
 };
 
 // @desc    Verify Email OTP
 const verifyEmailOTP = async (req, res) => {
-  const { email, otp } = req.body;
-  const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
+  try {
+    const { email, otp } = req.body;
+    const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
 
-  const user = await User.findOne({
-    email,
-    emailOTP: otpHash,
-    emailOTPExpiry: { $gt: Date.now() }
-  });
+    const user = await User.findOne({
+      email,
+      emailOTP: otpHash,
+      emailOTPExpiry: { $gt: Date.now() }
+    });
 
-  if (!user) {
-    return res.status(400).json({ message: "Invalid or expired OTP" });
+    if (!user) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Invalid or expired OTP" 
+      });
+    }
+
+    user.isEmailVerified = true;
+    user.emailOTP = undefined;
+    user.emailOTPExpiry = undefined;
+    await user.save();
+
+    res.status(200).json({ 
+      success: true,
+      message: "Email verified successfully" 
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "OTP verification failed",
+      error: error.message
+    });
   }
-
-  user.isEmailVerified = true;
-  user.emailOTP = undefined;
-  user.emailOTPExpiry = undefined;
-  await user.save();
-
-  res.status(200).json({ message: "Email verified successfully. You can now log in." });
 };
 
-// @desc    Login
+/// @desc    Login
 const login = async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const user = await User.findOne({
-    $or: [{ email: email }],
-  });
+    const user = await User.findOne({ email });
+    
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+      return res.status(401).json({ 
+        success: false,
+        message: "Invalid credentials" 
+      });
+    }
 
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-    return res.status(401).json({ message: "Invalid credentials" });
+    if (!user.isEmailVerified) {
+      return res.status(403).json({
+        success: false,
+        message: "Please verify your email before login",
+        isVerified: false,
+        email: user.email // Include email for resend OTP
+      });
+    }
+
+    const token = generateToken({ userId: user._id, role: user.role });
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isEmailVerified: user.isEmailVerified
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Login failed",
+      error: error.message
+    });
   }
-
-   if (!user.isEmailVerified) {
-    return res.status(403).json({ message: "Please verify your email before login" });
-  }
-
-  const token = generateToken({ userId: user._id, role: user.role });
-
-  res.status(200).json({
-    message: "Login successful",
-    token,
-    user: {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      role: user.role,
-    },
-  });
 };
 
 module.exports = {

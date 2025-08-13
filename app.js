@@ -37,7 +37,7 @@ setupSwaggerDocs(app);
 // Middleware
 // CORS setup for frontend connection
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000', // React dev URL
+  origin: process.env.CLIENT_URL || 'http://localhost:5173', // React dev URL
   credentials: true
 }));
 

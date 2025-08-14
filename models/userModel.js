@@ -11,8 +11,16 @@ const userSchema = new mongoose.Schema({
     default: 'User',
   },
   isEmailVerified: { type: Boolean, default: false },
+
+  // Registration OTP
   emailOTP: { type: String },
   emailOTPExpiry: { type: Date },
+
+  // Forgot password OTP
+  resetPasswordOTP: { type: String },
+  resetPasswordOTPExpiry: { type: Date },
+  otpVerifiedForReset: { type: Boolean, default: false },
+
   addresses: [
     {
       street: String,

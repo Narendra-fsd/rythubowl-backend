@@ -1,0 +1,5 @@
+// otpStore.js
+// A simple in-memory object to store OTPs temporarily
+const otpStore = {};
+
+module.exports = otpStore;

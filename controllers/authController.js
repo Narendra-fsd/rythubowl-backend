@@ -6,7 +6,7 @@ const { generateToken } = require("../utils/jwt");
 const { calculateAnalytics } = require("../services/analyticsService");
 const Analytics = require("../models/analyticsModel");
 
-// @desc    Register a new user
+// Register a new user
 const register = async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
@@ -60,7 +60,7 @@ const register = async (req, res) => {
   }
 };
 
-// @desc    Verify Email OTP
+// Verify Email OTP
 const verifyEmailOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -98,7 +98,7 @@ const verifyEmailOTP = async (req, res) => {
   }
 };
 
-/// @desc    Login
+// Login
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -146,8 +146,143 @@ const login = async (req, res) => {
   }
 };
 
+// @desc Forgot Password - Send OTP
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Validate email input
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required"
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
+
+    // Save hashed OTP and expiry to DB
+    user.resetPasswordOTP = otpHash;
+    user.resetPasswordOTPExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes from now
+    await user.save();
+
+    // Send OTP via email (non-blocking fire-and-forget)
+    sendEmail(user.email, "Password Reset OTP", `Your OTP is: ${otp}`)
+      .catch(err => console.error("Email send error:", err));
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP sent to your email address"
+    });
+
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send password reset OTP",
+      error: error.message
+    });
+  }
+};
+
+// @desc Verify Forgot Password OTP
+const verifyForgotPasswordOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and OTP are required"
+      });
+    }
+
+    const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
+
+    const user = await User.findOne({
+      email,
+      resetPasswordOTP: otpHash,
+      resetPasswordOTPExpiry: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired OTP"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP verified successfully"
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to verify OTP",
+      error: error.message
+    });
+  }
+};
+
+//   Reset Password
+const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
+
+    const user = await User.findOne({
+      email,
+      resetPasswordOTP: otpHash,
+      resetPasswordOTPExpiry: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired OTP"
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.passwordHash = await bcrypt.hash(newPassword, salt);
+    user.resetPasswordOTP = undefined;
+    user.resetPasswordOTPExpiry = undefined;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password reset successful"
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Password reset failed",
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   register,
   verifyEmailOTP,
   login,
+  forgotPassword,
+  verifyForgotPasswordOtp,
+  resetPassword
 };

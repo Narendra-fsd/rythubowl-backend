@@ -6,7 +6,7 @@ const {
   login,
   verifyEmailOTP,
   forgotPassword,
-  verifyResetPasswordOtp,
+  verifyForgotPasswordOtp,
   resetPassword,
 } = require("../controllers/authController");
 
@@ -20,7 +20,7 @@ router.post("/login", validate(loginSchema), login);
 
 // Forgot-password flow
 router.post("/forgot-password", forgotPassword);
-router.post("/verify-forgot-otp", verifyResetPasswordOtp);
+router.post("/verify-forgot-otp", verifyForgotPasswordOtp);
 router.post("/reset-password", resetPassword);
 
 module.exports = router;

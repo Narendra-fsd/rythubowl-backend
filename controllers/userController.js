@@ -40,6 +40,30 @@ const updateUser = async (req, res) => {
   res.json({ message: 'User updated', user });
 };
 
+// ✅ Get my profile (self)
+const getMyProfile = async (req, res) => {
+  const user = await User.findById(req.user.userId).select("-passwordHash");
+  if (!user) return res.status(404).json({ message: "User not found" });
+  res.json(user);
+};
+
+// ✅ Update my profile (self)
+const updateMyProfile = async (req, res) => {
+  const { name, phone, addresses } = req.body;
+
+  const user = await User.findById(req.user.userId);
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  user.name = name || user.name;
+  user.phone = phone || user.phone;
+  user.addresses = addresses || user.addresses;
+
+  await user.save();
+
+  res.json({ message: "Profile updated successfully", user });
+};
+
+
 // Delete user (Only SuperAdmin)
 const deleteUser = async (req, res) => {
   const user = await User.findById(req.params.id);
@@ -57,5 +81,7 @@ module.exports = {
   getAllUsers,
   getUserById,
   updateUser,
+  getMyProfile,
+  updateMyProfile,
   deleteUser,
 };

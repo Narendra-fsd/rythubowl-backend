@@ -1,30 +1,43 @@
 const mongoose = require("mongoose");
 
-const paymentSchema = new mongoose.Schema(
-  {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    order: { type: mongoose.Schema.Types.ObjectId, ref: "Order" },
-    subscription: { type: mongoose.Schema.Types.ObjectId, ref: "Subscription" },
-    paymentMode: {
-      type: String,
-      enum: ["CashOnDelivery", "Online"],
-      required: true,
-    },
-    paymentGateway: {
-      type: String,
-      enum: ["Razorpay", "COD"],
-      default: "Razorpay",
-    },
-    amount: { type: Number, required: true },
-    status: {
-      type: String,
-      enum: ["Pending", "Success", "Failed"],
-      default: "Pending",
-    },
-    transactionId: { type: String },
-    paymentDate: { type: Date, default: Date.now },
+const paymentSchema = new mongoose.Schema({
+  amount: {
+    type: Number,
   },
-  { timestamps: true }
-);
+  currency: {
+    type: String,
+  },
+  orderId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Order",
+    required: true,
+  },
+  razorpay_order_id: {
+    type: String,
+    required: true,
+  },
+  razorpay_payment_id: {
+    type: String,
+    required: true,
+  },
+  razorpay_signature: {
+    type: String,
+    required: true,
+  },
+  status: {
+    type: String,
+    enum: ["pending", "completed", "failed"],
+    default: "pending",
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
 
-module.exports = mongoose.model("Payment", paymentSchema);
+const Payment = mongoose.model("Payment", paymentSchema);
+module.exports = Payment;

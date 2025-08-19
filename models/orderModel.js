@@ -1,26 +1,70 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const orderSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  products: [{
-    product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
-    quantity: { type: Number, required: true }
-  }],
-  deliveryAddress: { type: mongoose.Schema.Types.ObjectId, ref: 'Address', required: true },
-  totalAmount: { type: Number, required: true },
-  paymentStatus: {
-    type: String,
-    enum: ['Pending', 'Paid', 'Failed'],
-    default: 'Pending'
-  },
-  orderStatus: {
-    type: String,
-    enum: ['Placed', 'Processing', 'Shipped', 'Delivered', 'Cancelled'],
-    default: 'Placed'
-  },
-  deliveryAgent: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  deliveryDate: { type: Date },
-  isSubscriptionOrder: { type: Boolean, default: false }
-}, { timestamps: true });
+const orderSchema = new mongoose.Schema(
+  {
+    amount: {
+      type: Number,
+      required: true,
+    },
+    currency: {
+      type: String,
+      required: true,
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    paymentOrderId: {
+      type: String,
+      required: true,
+    },
+    customerDetails: {
+      type: Object,
+    },
+    deliveryAddress: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Address",
+    },
+    OrderItems: [
+      {
+        itemName: { type: String },
+        itemPrice: { type: Number },
+        itemQuantity: { type: Number },
+        itemTotal: { type: Number },
+      },
+    ],
 
-module.exports = mongoose.model('Order', orderSchema);
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "initiated", "completed", "failed"],
+      default: "pending",
+    },
+    status: {
+      type: String,
+      enum: [
+        "Placed",
+        "pending",
+        "Processing",
+        "Shipped",
+        "Delivered",
+        "Cancelled",
+      ],
+      default: "pending",
+    },
+    deliveryDate: { type: Date },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { timestamps: true }
+);
+
+const Order = mongoose.model("Order", orderSchema);
+
+module.exports = Order;

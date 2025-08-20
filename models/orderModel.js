@@ -26,14 +26,7 @@ const orderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Address",
     },
-    OrderItems: [
-      {
-        itemName: { type: String },
-        itemPrice: { type: Number },
-        itemQuantity: { type: Number },
-        itemTotal: { type: Number },
-      },
-    ],
+    OrderItems: [],
 
     paymentStatus: {
       type: String,

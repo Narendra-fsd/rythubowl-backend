@@ -82,6 +82,18 @@ const verifyPayment = async (req, res) => {
       res.json({
         success: true,
         message: "Payment verified successfully",
+        data: {
+          orderId: order_id,
+          paymentId: payment_id,
+          signature: signature,
+          amount: orderDetails.amount,
+          currency: orderDetails.currency,
+          orderDetails: {
+            userId: orderDetails.userId,
+            customerDetails: orderDetails.customerDetails,
+            OrderItems: orderDetails.OrderItems,
+          },
+        },
       });
     } else {
       res.status(400).json({

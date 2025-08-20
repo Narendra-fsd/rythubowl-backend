@@ -4,9 +4,7 @@ const router = express.Router();
 const {
   register,
   login,
-  verifyEmailOTP,
   forgotPassword,
-  verifyForgotPasswordOtp,
   resetPassword,
 } = require("../controllers/authController");
 
@@ -15,12 +13,10 @@ const { registerSchema, loginSchema } = require("../utils/validationSchemas");
 
 // Auth
 router.post("/register", validate(registerSchema), register);
-router.post("/verify-email", verifyEmailOTP);
 router.post("/login", validate(loginSchema), login);
 
-// Forgot-password flow
+// Forgot-password flow (without OTP)
 router.post("/forgot-password", forgotPassword);
-router.post("/verify-forgot-otp", verifyForgotPasswordOtp);
-router.post("/reset-password", resetPassword);
+router.post("/reset-password/:token", resetPassword);
 
 module.exports = router;

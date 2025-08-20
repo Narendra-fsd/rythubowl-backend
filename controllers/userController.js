@@ -10,6 +10,7 @@ const getAllUsers = async (req, res) => {
 
 // Get user by ID (SuperAdmin or Self)
 const getUserById = async (req, res) => {
+  
   const user = await User.findById(req.params.id).select('-passwordHash');
   if (!user) return res.status(404).json({ message: 'User not found' });
 

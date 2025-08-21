@@ -1,11 +1,11 @@
-const nodemailer = require("nodemailer");
+import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
-  service: "Gmail", // Or use SMTP settings
+  service: "Gmail", // Or replace with custom SMTP settings
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
 const sendEmail = async (to, subject, text) => {
@@ -14,12 +14,13 @@ const sendEmail = async (to, subject, text) => {
       from: process.env.EMAIL_USER,
       to,
       subject,
-      text
+      text,
     });
     console.log(`✅ Email sent to ${to}`);
   } catch (error) {
-    console.error("❌ Email sending failed:", error);
+    console.error("❌ Email sending failed:", error.message);
+    throw new Error("Email sending failed"); // ensure caller can catch errors
   }
 };
 
-module.exports = sendEmail;
+export default sendEmail;

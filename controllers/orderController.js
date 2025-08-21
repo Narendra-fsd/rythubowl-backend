@@ -1,11 +1,11 @@
-const Order = require('../models/orderModel');
+import Order from "../models/orderModel.js";
 
 // Create new order
-exports.createOrder = async (req, res) => {
+export const createOrder = async (req, res) => {
   try {
     const order = new Order({
       user: req.user.userId,
-      ...req.body
+      ...req.body,
     });
 
     await order.save();
@@ -13,9 +13,9 @@ exports.createOrder = async (req, res) => {
     // Notify user about order creation
     await createNotification(
       req.user.userId,
-      'Order Placed',
+      "Order Placed",
       `Your order #${order._id} has been placed successfully.`,
-      'Order'
+      "Order"
     );
 
     // 🔹 Update analytics after order creation
@@ -23,52 +23,61 @@ exports.createOrder = async (req, res) => {
       const analyticsData = await calculateAnalytics();
       await Analytics.create(analyticsData);
     } catch (analyticsErr) {
-      console.error("Analytics update failed after order creation:", analyticsErr.message);
+      console.error(
+        "Analytics update failed after order creation:",
+        analyticsErr.message
+      );
     }
 
     res.status(201).json(order);
   } catch (err) {
-    res.status(500).json({ message: 'Failed to place order', error: err.message });
+    res
+      .status(500)
+      .json({ message: "Failed to place order", error: err.message });
   }
 };
 
 // Get all orders
-exports.getAllOrders = async (req, res) => {
+export const getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find()
-      .populate('user', 'name email')
-      .populate('products.product', 'name')
-      .populate('deliveryAddress');
+      .populate("user", "name email")
+      .populate("products.product", "name")
+      .populate("deliveryAddress");
 
     res.json(orders);
   } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch orders', error: err.message });
+    res
+      .status(500)
+      .json({ message: "Failed to fetch orders", error: err.message });
   }
 };
 
 // Get order by ID
-exports.getOrderById = async (req, res) => {
+export const getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
-      .populate('user', 'name email')
-      .populate('products.product', 'name')
-      .populate('deliveryAddress');
+      .populate("user", "name email")
+      .populate("products.product", "name")
+      .populate("deliveryAddress");
 
-    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (!order) return res.status(404).json({ message: "Order not found" });
 
     res.json(order);
   } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch order', error: err.message });
+    res
+      .status(500)
+      .json({ message: "Failed to fetch order", error: err.message });
   }
 };
 
 // Update order status
-exports.updateOrderStatus = async (req, res) => {
+export const updateOrderStatus = async (req, res) => {
   try {
     const { orderStatus, paymentStatus, deliveryDate } = req.body;
 
     const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (!order) return res.status(404).json({ message: "Order not found" });
 
     if (orderStatus) order.orderStatus = orderStatus;
     if (paymentStatus) order.paymentStatus = paymentStatus;
@@ -80,9 +89,9 @@ exports.updateOrderStatus = async (req, res) => {
     if (orderStatus) {
       await createNotification(
         order.user,
-        'Order Status Updated',
+        "Order Status Updated",
         `Your order #${order._id} status has been updated to: ${orderStatus}.`,
-        'Order'
+        "Order"
       );
     }
 
@@ -91,27 +100,32 @@ exports.updateOrderStatus = async (req, res) => {
       const analyticsData = await calculateAnalytics();
       await Analytics.create(analyticsData);
     } catch (analyticsErr) {
-      console.error("Analytics update failed after order update:", analyticsErr.message);
+      console.error(
+        "Analytics update failed after order update:",
+        analyticsErr.message
+      );
     }
 
-    res.json({ message: 'Order updated', order });
+    res.json({ message: "Order updated", order });
   } catch (err) {
-    res.status(500).json({ message: 'Failed to update order', error: err.message });
+    res
+      .status(500)
+      .json({ message: "Failed to update order", error: err.message });
   }
 };
 
 // Delete order
-exports.deleteOrder = async (req, res) => {
+export const deleteOrder = async (req, res) => {
   try {
     const deleted = await Order.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: 'Order not found' });
+    if (!deleted) return res.status(404).json({ message: "Order not found" });
 
     // Notify user about order deletion
     await createNotification(
       deleted.user,
-      'Order Cancelled',
+      "Order Cancelled",
       `Your order #${deleted._id} has been cancelled by the admin.`,
-      'Order'
+      "Order"
     );
 
     // 🔹 Update analytics after order deletion
@@ -119,11 +133,16 @@ exports.deleteOrder = async (req, res) => {
       const analyticsData = await calculateAnalytics();
       await Analytics.create(analyticsData);
     } catch (analyticsErr) {
-      console.error("Analytics update failed after order deletion:", analyticsErr.message);
+      console.error(
+        "Analytics update failed after order deletion:",
+        analyticsErr.message
+      );
     }
 
-    res.json({ message: 'Order deleted successfully' });
+    res.json({ message: "Order deleted successfully" });
   } catch (err) {
-    res.status(500).json({ message: 'Failed to delete order', error: err.message });
+    res
+      .status(500)
+      .json({ message: "Failed to delete order", error: err.message });
   }
 };

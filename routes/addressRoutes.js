@@ -1,14 +1,21 @@
-const express = require("express");
+import express from "express";
+import {
+  createAddress,
+  getMyAddresses,
+  getAddressById,
+  updateAddress,
+  deleteAddress,
+} from "../controllers/addressController.js";
+// import authMiddleware from "../middlewares/authMiddleware.js";
+
 const router = express.Router();
-const addressController = require("../controllers/addressController");
-// const authMiddleware = require("../middlewares/authMiddleware");
 
-// // router.use(authMiddleware);
+// router.use(authMiddleware);
 
-router.post("/add-address", addressController.createAddress);
-router.get("/", addressController.getMyAddresses);
-router.get("/:id", addressController.getAddressById);
-router.put("/:id", addressController.updateAddress);
-router.delete("/:id", addressController.deleteAddress);
+router.post("/add-address", createAddress);
+router.get("/", getMyAddresses);
+router.get("/:id", getAddressById);
+router.put("/:id", updateAddress);
+router.delete("/:id", deleteAddress);
 
-module.exports = router;
+export default router;

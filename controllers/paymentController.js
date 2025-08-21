@@ -1,14 +1,15 @@
-const Razorpay = require("razorpay");
-const OrderModel = require("../models/orderModel");
-const Payment = require("../models/paymentModel");
+import Razorpay from "razorpay";
+import crypto from "crypto";
+import OrderModel from "../models/orderModel.js";
+import Payment from "../models/paymentModel.js";
 
 const razorpay = new Razorpay({
   key_id: "rzp_test_h5bgZzCw9TQtTr",
   key_secret: "4APx9NMZALi4r0b3fMv9AAoB",
 });
 
-//
-const createpayment = async (req, res) => {
+// Create payment order
+export const createpayment = async (req, res) => {
   try {
     const { amount, currency = "INR", receipt, orderDetails } = req.body;
 
@@ -45,7 +46,8 @@ const createpayment = async (req, res) => {
   }
 };
 
-const verifyPayment = async (req, res) => {
+// Verify payment
+export const verifyPayment = async (req, res) => {
   try {
     const { order_id, payment_id, signature } = req.body;
     const orderDetails = await OrderModel.findOne({ paymentOrderId: order_id });
@@ -63,8 +65,8 @@ const verifyPayment = async (req, res) => {
       updatedAt: new Date(),
     });
     await newPayment.save();
+
     // Create expected signature
-    const crypto = require("crypto");
     const expectedSignature = crypto
       .createHmac("sha256", "4APx9NMZALi4r0b3fMv9AAoB")
       .update(order_id + "|" + payment_id)
@@ -110,14 +112,9 @@ const verifyPayment = async (req, res) => {
   }
 };
 
-const getKey = (req, res) => {
+// Get Razorpay Key
+export const getKey = (req, res) => {
   res.json({
     key: "rzp_test_h5bgZzCw9TQtTr",
   });
-};
-
-module.exports = {
-  createpayment,
-  verifyPayment,
-  getKey,
 };

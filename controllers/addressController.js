@@ -1,7 +1,7 @@
-const Address = require("../models/addressModel");
+import Address from "../models/addressModel.js";
 
 // Create address
-exports.createAddress = async (req, res) => {
+export const createAddress = async (req, res) => {
   try {
     console.log("Creating address for user:", req.body);
     const address = await Address.create({
@@ -16,7 +16,7 @@ exports.createAddress = async (req, res) => {
 };
 
 // Get all addresses of the logged-in user
-exports.getMyAddresses = async (req, res) => {
+export const getMyAddresses = async (req, res) => {
   try {
     const addresses = await Address.find({ userId: req.user.userId });
     res.status(200).json(addresses);
@@ -28,7 +28,7 @@ exports.getMyAddresses = async (req, res) => {
 };
 
 // Get a specific address by ID
-exports.getAddressById = async (req, res) => {
+export const getAddressById = async (req, res) => {
   if (!req.params.id) {
     return res.status(400).json({ message: "Address ID is required" });
   }
@@ -48,7 +48,7 @@ exports.getAddressById = async (req, res) => {
 };
 
 // Update address
-exports.updateAddress = async (req, res) => {
+export const updateAddress = async (req, res) => {
   try {
     const updated = await Address.findOneAndUpdate(
       { _id: req.params.id, userId: req.user.userId },
@@ -70,7 +70,7 @@ exports.updateAddress = async (req, res) => {
 };
 
 // Delete address
-exports.deleteAddress = async (req, res) => {
+export const deleteAddress = async (req, res) => {
   try {
     const deleted = await Address.findOneAndDelete({
       _id: req.params.id,

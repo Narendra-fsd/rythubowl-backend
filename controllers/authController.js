@@ -1,11 +1,11 @@
-const bcrypt = require("bcryptjs");
-const crypto = require("crypto");
-const User = require("../models/userModel");
-const sendEmail = require("../utils/sendEmail");
-const { generateToken } = require("../utils/jwt");
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
+import User from "../models/userModel.js";
+import sendEmail from "../utils/sendEmail.js";
+import { generateToken } from "../utils/jwt.js";
 
 // Register a new user - Simplified without email verification
-const register = async (req, res) => {
+export const register = async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
 
@@ -57,7 +57,7 @@ const register = async (req, res) => {
 };
 
 // Login - No email verification check needed
-const login = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -92,9 +92,4 @@ const login = async (req, res) => {
       error: error.message,
     });
   }
-};
-
-module.exports = {
-  register,
-  login,
 };

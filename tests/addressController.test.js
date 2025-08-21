@@ -1,7 +1,7 @@
-const request = require("supertest");
-const mongoose = require("mongoose");
-const app = require("../app");
-const Address = require("../models/addressModel");
+import request from "supertest";
+import mongoose from "mongoose";
+import app from "../app.js";
+import Address from "../models/addressModel.js";
 
 beforeEach(async () => {
   await Address.deleteMany({});
@@ -18,13 +18,15 @@ describe("Address Controller", () => {
       street: "123 Main St",
       city: "Testville",
       state: "TS",
-      pincode: "123456",
-      country: "India",
-      userId: new mongoose.Types.ObjectId(), // Add required userId field
+      zip: "123456",       // match your schema (uses `zip`, not `pincode`)
+      landmark: "Near Park",
+      userId: new mongoose.Types.ObjectId(),
     };
-    const res = await request(app).post("/api/addresses").send(addressData);
+
+    const res = await request(app).post("/api/addresses/add-address").send(addressData);
+
     expect(res.statusCode).toBe(201);
-    expect(res.body).toHaveProperty("street", "123 Main St");
+    expect(res.body.address).toHaveProperty("street", "123 Main St");
   });
 
   it("should get address by id", async () => {
@@ -32,12 +34,14 @@ describe("Address Controller", () => {
       street: "ById",
       city: "City",
       state: "ST",
-      pincode: "333333",
-      country: "India",
+      zip: "333333",      // match schema
+      landmark: "Test Landmark",
       userId: new mongoose.Types.ObjectId(),
     });
+
     const res = await request(app).get(`/api/addresses/${address._id}`);
+
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty("street", "ById");
+    expect(res.body[0]).toHaveProperty("street", "ById");
   });
 });

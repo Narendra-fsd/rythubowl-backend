@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const logger = require('../utils/logger');
+import mongoose from "mongoose";
+import logger from "../utils/logger.js";
 
 const connectDB = async () => {
   try {
@@ -7,11 +7,11 @@ const connectDB = async () => {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    logger.info('MongoDB connected successfully');
+    logger.info("MongoDB connected successfully");
   } catch (error) {
-    logger.error('MongoDB connection failed', error);
+    logger.error("MongoDB connection failed", error);
     process.exit(1);
   }
 };
 
-module.exports = connectDB;
+export default connectDB;

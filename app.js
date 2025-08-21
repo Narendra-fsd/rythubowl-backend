@@ -8,26 +8,13 @@ const logger = require('./utils/logger');
 const errorHandler = require('./middlewares/errorMiddleware');
 const setupSwaggerDocs = require('./swagger/index');
 
-
 // Import Routes
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
-const rbacRoutes = require('./routes/rbacRoutes');
 const addressRoutes = require('./routes/addressRoutes');
-const pincodeZoneRoutes = require('./routes/pincodeZoneRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
-const reviewRoutes = require('./routes/reviewRoutes');
-const deliveryRoutes = require('./routes/deliveryRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
-const subscriptionRoutes = require('./routes/subscriptionRoutes');
-const analyticsRoutes = require('./routes/analyticsRoutes');
-
-// (Add other routes like productRoutes, orderRoutes, etc.)
-
-// Import SuperAdmin creation logic
-const { createSuperAdmin } = require('./scripts/createSuperAdmin');
 
 const app = express();
 
@@ -47,18 +34,10 @@ app.use(morgan('dev'));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/roles', rbacRoutes);
 app.use('/api/addresses', addressRoutes);
-app.use('/api/zones', pincodeZoneRoutes);
-app.use('/api/reviews', reviewRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/deliveries', deliveryRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/subscriptions', subscriptionRoutes);
-app.use('/api/analytics', analyticsRoutes);
-
 
 // ===== Serve Frontend in Production =====
 if (process.env.NODE_ENV === 'production') {
@@ -75,11 +54,8 @@ app.use(errorHandler);
 
 // Connect to MongoDB and start server
 mongoose.connect(process.env.MONGO_URI)
-  .then(async () => {
+  .then(() => {
     console.log('✅ MongoDB connected');
-
-    // 🔐 Ensure SuperAdmin exists
-    await createSuperAdmin();
 
     // Start server
     app.listen(process.env.PORT || 5000, () => {

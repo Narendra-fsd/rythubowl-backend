@@ -13,7 +13,7 @@ const productSchema = new mongoose.Schema({
   stock: { type: Number, required: true },
   availableFor: {
     type: String,
-    enum: ['Order', 'Subscription', 'Both'],
+    enum: ['Order'],
     default: 'Order'
   },
   imageUrl: { type: String },

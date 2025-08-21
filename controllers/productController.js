@@ -1,18 +1,10 @@
 const Product = require("../models/productModel");
 
-// Create a new product (SuperAdmin only)
+// Create a new product
 exports.createProduct = async (req, res) => {
   try {
     const product = new Product(req.body);
     await product.save();
-
-    // 🔹 Update analytics after product creation
-    try {
-      const analyticsData = await calculateAnalytics();
-      await Analytics.create(analyticsData);
-    } catch (analyticsErr) {
-      console.error("Analytics update failed after product creation:", analyticsErr.message);
-    }
 
     res.status(201).json({
       message: "Product created successfully",
@@ -56,7 +48,7 @@ exports.getProductById = async (req, res) => {
   }
 };
 
-// Update product by ID (SuperAdmin only)
+// Update product by ID
 exports.updateProduct = async (req, res) => {
   try {
     const updated = await Product.findByIdAndUpdate(req.params.id, req.body, {
@@ -64,14 +56,6 @@ exports.updateProduct = async (req, res) => {
     });
 
     if (!updated) return res.status(404).json({ message: "Product not found" });
-
-    // 🔹 Update analytics after product update
-    try {
-      const analyticsData = await calculateAnalytics();
-      await Analytics.create(analyticsData);
-    } catch (analyticsErr) {
-      console.error("Analytics update failed after product update:", analyticsErr.message);
-    }
 
     res.status(200).json({
       message: "Product updated successfully",
@@ -85,19 +69,11 @@ exports.updateProduct = async (req, res) => {
   }
 };
 
-// Delete product by ID (SuperAdmin only)
+// Delete product by ID
 exports.deleteProduct = async (req, res) => {
   try {
     const deleted = await Product.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ message: "Product not found" });
-
-    // 🔹 Update analytics after product deletion
-    try {
-      const analyticsData = await calculateAnalytics();
-      await Analytics.create(analyticsData);
-    } catch (analyticsErr) {
-      console.error("Analytics update failed after product deletion:", analyticsErr.message);
-    }
 
     res.status(200).json({
       message: "Product deleted successfully",

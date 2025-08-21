@@ -1,10 +1,6 @@
 const Order = require('../models/orderModel');
-const { assignDeliveryAgent } = require('../services/deliveryTrackingService');
-const { createNotification } = require('../services/notificationService');
-const { calculateAnalytics } = require('../services/analyticsService');
-const Analytics = require('../models/analyticsModel');
 
-// Create new order and assign delivery
+// Create new order
 exports.createOrder = async (req, res) => {
   try {
     const order = new Order({
@@ -13,12 +9,6 @@ exports.createOrder = async (req, res) => {
     });
 
     await order.save();
-
-    // Assign delivery agent after order is saved
-    const deliveryAgentId = req.body.deliveryAgent || null;
-    if (deliveryAgentId) {
-      await assignDeliveryAgent(order._id, deliveryAgentId);
-    }
 
     // Notify user about order creation
     await createNotification(
@@ -42,14 +32,13 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-// Get all orders (SuperAdmin only)
+// Get all orders
 exports.getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find()
       .populate('user', 'name email')
       .populate('products.product', 'name')
-      .populate('deliveryAddress')
-      .populate('deliveryAgent', 'name phone');
+      .populate('deliveryAddress');
 
     res.json(orders);
   } catch (err) {
@@ -57,20 +46,15 @@ exports.getAllOrders = async (req, res) => {
   }
 };
 
-// Get order by ID (Owner or SuperAdmin)
+// Get order by ID
 exports.getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate('user', 'name email')
       .populate('products.product', 'name')
-      .populate('deliveryAddress')
-      .populate('deliveryAgent', 'name phone');
+      .populate('deliveryAddress');
 
     if (!order) return res.status(404).json({ message: 'Order not found' });
-
-    if (req.user.role !== 'SuperAdmin' && req.user.userId !== order.user.toString()) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
 
     res.json(order);
   } catch (err) {
@@ -78,17 +62,16 @@ exports.getOrderById = async (req, res) => {
   }
 };
 
-// Update order status (SuperAdmin only)
+// Update order status
 exports.updateOrderStatus = async (req, res) => {
   try {
-    const { orderStatus, paymentStatus, deliveryAgent, deliveryDate } = req.body;
+    const { orderStatus, paymentStatus, deliveryDate } = req.body;
 
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     if (orderStatus) order.orderStatus = orderStatus;
     if (paymentStatus) order.paymentStatus = paymentStatus;
-    if (deliveryAgent) order.deliveryAgent = deliveryAgent;
     if (deliveryDate) order.deliveryDate = deliveryDate;
 
     await order.save();
@@ -117,7 +100,7 @@ exports.updateOrderStatus = async (req, res) => {
   }
 };
 
-// Delete order (SuperAdmin only)
+// Delete order
 exports.deleteOrder = async (req, res) => {
   try {
     const deleted = await Order.findByIdAndDelete(req.params.id);

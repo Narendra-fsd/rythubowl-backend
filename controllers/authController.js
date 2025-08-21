@@ -9,6 +9,11 @@ const register = async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
 
+    // Clean up any existing user with same email or phone (for test environments)
+    if (process.env.NODE_ENV === "test") {
+      await User.deleteMany({ $or: [{ email }, { phone }] });
+    }
+
     // Check existing user
     const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
     if (existingUser) {
@@ -89,117 +94,7 @@ const login = async (req, res) => {
   }
 };
 
-// Simplified Forgot Password - Send reset link directly
-const forgotPassword = async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    // Validate email input
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Email is required",
-      });
-    }
-
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    // Generate a password reset token (valid for 1 hour)
-    const resetToken = crypto.randomBytes(32).toString("hex");
-    const resetTokenHash = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
-
-    user.resetPasswordToken = resetTokenHash;
-    user.resetPasswordExpiry = Date.now() + 60 * 60 * 1000; // 1 hour from now
-    await user.save();
-
-    // Create reset URL
-    const resetUrl = `${req.protocol}://${req.get(
-      "host"
-    )}/api/auth/reset-password/${resetToken}`;
-
-    // Send reset link via email
-    const message = `You requested a password reset. Click the link to reset your password: ${resetUrl}`;
-
-    sendEmail(user.email, "Password Reset Request", message).catch((err) =>
-      console.error("Email send error:", err)
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: "Password reset link sent to your email address",
-    });
-  } catch (error) {
-    console.error("Forgot password error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to process password reset request",
-      error: error.message,
-    });
-  }
-};
-
-// Reset Password (without OTP verification)
-const resetPassword = async (req, res) => {
-  try {
-    const { token } = req.params;
-    const { newPassword } = req.body;
-
-    if (!token) {
-      return res.status(400).json({
-        success: false,
-        message: "Reset token is required",
-      });
-    }
-
-    // Hash the token to compare with stored hash
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-
-    const user = await User.findOne({
-      resetPasswordToken: tokenHash,
-      resetPasswordExpiry: { $gt: Date.now() },
-    });
-
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid or expired reset token",
-      });
-    }
-
-    // Update password
-    const salt = await bcrypt.genSalt(10);
-    user.passwordHash = await bcrypt.hash(newPassword, salt);
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpiry = undefined;
-
-    await user.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Password reset successful",
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Password reset failed",
-      error: error.message,
-    });
-  }
-};
-
 module.exports = {
   register,
   login,
-  forgotPassword,
-  resetPassword,
 };

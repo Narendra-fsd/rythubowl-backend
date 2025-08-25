@@ -10,9 +10,9 @@ export const register = async (req, res) => {
     const { name, email, phone, password } = req.body;
 
     // Clean up any existing user with same email or phone (for test environments)
-    if (process.env.NODE_ENV === "test") {
-      await User.deleteMany({ $or: [{ email }, { phone }] });
-    }
+    // if (process.env.NODE_ENV === "test") {
+    //   await User.deleteMany({ $or: [{ email }, { phone }] });
+    // }
 
     // Check existing user
     const existingUser = await User.findOne({ $or: [{ email }, { phone }] });

@@ -10,6 +10,7 @@ import {
 
 const router = express.Router();
 
+// Now all routes below will require authentication
 router.get("/me", getMyProfile);
 router.put("/me", updateMyProfile);
 router.get("/:id", getUserById);

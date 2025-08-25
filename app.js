@@ -48,17 +48,17 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/products", productRoutes);
 
 // ===== Serve Frontend in Production =====
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
 
-if (process.env.NODE_ENV === "production") {
-  const frontendPath = path.join(__dirname, "..", "frontend", "build");
-  app.use(express.static(frontendPath));
+// if (process.env.NODE_ENV === "production") {
+//   const frontendPath = path.join(__dirname, "..", "frontend", "build");
+//   app.use(express.static(frontendPath));
 
-  app.get("*", (req, res) => {
-    res.sendFile(path.resolve(frontendPath, "index.html"));
-  });
-}
+//   app.get("*", (req, res) => {
+//     res.sendFile(path.resolve(frontendPath, "index.html"));
+//   });
+// }
 
 // Error middleware
 app.use(errorHandler);

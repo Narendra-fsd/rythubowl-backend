@@ -56,10 +56,9 @@ export const getAllOrders = async (req, res) => {
 // Get order by ID
 export const getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id)
-      .populate("user", "name email")
-      .populate("products.product", "name")
-      .populate("deliveryAddress");
+    const order = await Order.findById(req.params.id).populate(
+      "deliveryAddress"
+    );
 
     if (!order) return res.status(404).json({ message: "Order not found" });
 
@@ -71,6 +70,22 @@ export const getOrderById = async (req, res) => {
   }
 };
 
+export const getOrderByUserId = async (req, res) => {
+  try {
+    const orders = await Order.find({ userId: req.params.userId })
+      .populate("userId", "name email")
+      .populate("deliveryAddress");
+    res.json({
+      success: true,
+      orders,
+      message: "Order fetched successfully",
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Failed to fetch orders", error: err.message });
+  }
+};
 // Update order status
 export const updateOrderStatus = async (req, res) => {
   try {

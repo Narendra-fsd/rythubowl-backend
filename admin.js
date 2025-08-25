@@ -10,6 +10,7 @@ import User from "./models/userModel.js";
 import Product from "./models/productModel.js";
 import Order from "./models/orderModel.js";
 import Payment from "./models/paymentModel.js";
+import Address from "./models/addressModel.js";
 
 // Register mongoose adapter
 AdminJS.registerAdapter(AdminJSMongoose);
@@ -22,6 +23,7 @@ const adminJs = new AdminJS({
     { resource: Product, options: { parent: { name: "Product Management" } } },
     { resource: Order, options: { parent: { name: "Order Management" } } },
     { resource: Payment, options: { parent: { name: "Payment Management" } } },
+    { resource: Address, options: { parent: { name: "Address Management" } } },
   ],
   branding: {
     companyName: "RythuBowl Admin",

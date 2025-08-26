@@ -39,27 +39,46 @@ export const updateUser = async (req, res) => {
   res.json({ message: "User updated", user });
 };
 
-// Get my profile
+// In userController.js - getMyProfile
 export const getMyProfile = async (req, res) => {
-  const user = await User.findById(req.user.userId).select("-passwordHash");
-  if (!user) return res.status(404).json({ message: "User not found" });
-  res.json(user);
+  try {
+    const user = await User.findById(req.user._id).select("-passwordHash");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 // Update my profile
 export const updateMyProfile = async (req, res) => {
-  const { name, phone, addresses } = req.body;
+  try {
+    const { name, phone, addresses } = req.body;
 
-  const user = await User.findById(req.user.userId);
-  if (!user) return res.status(404).json({ message: "User not found" });
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-  user.name = name || user.name;
-  user.phone = phone || user.phone;
-  user.addresses = addresses || user.addresses;
+    user.name = name || user.name;
+    user.phone = phone || user.phone;
+    user.addresses = addresses || user.addresses;
 
-  await user.save();
+    await user.save();
 
-  res.json({ message: "Profile updated successfully", user });
+    // Return user without passwordHash
+    const updatedUser = await User.findById(req.user._id).select(
+      "-passwordHash"
+    );
+
+    res.json({
+      message: "Profile updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 };
 
 // Delete user

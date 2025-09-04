@@ -17,7 +17,8 @@ const authMiddleware = async (req, res, next) => {
     const user = await User.findById(decoded.userId).select("-passwordHash");
     if (!user) return res.status(401).json({ message: "User not found" });
 
-    req.user = user;
+    // Set req.user as { userId: ... } for compatibility with tests
+    req.user = { userId: user._id.toString() };
     next();
   } catch (err) {
     res.status(401).json({ message: "Invalid token" });
